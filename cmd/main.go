@@ -30,7 +30,7 @@ func main() {
 		Addr:         fmt.Sprintf(":%s", os.Getenv("PORT")),
 		Handler:      app.Router(),
 		ReadTimeout:  1 * time.Minute, // Default is 10s, increaased incase of large files
-		WriteTimeout: 3 * time.Minute, // Default is 10s, increaased incase of longer operation
+		WriteTimeout: 2 * time.Minute, // Default is 10s, increaased incase of longer operation
 	}
 
 	go func() {
@@ -50,7 +50,7 @@ func main() {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server shutdown", err)
+		log.Fatal("Server shutdown error", err)
 	}
 
 	// Catching ctx.Done().

@@ -20,4 +20,5 @@ func (server *ServerSetup) RegisterRoutes() {
 
 	v1.Use(TimeoutMiddleware())
 	v1.POST("/readfile", ReadExcel)
+	v1.GET("/populate", PopulateExcel)
 }

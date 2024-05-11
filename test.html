@@ -20,6 +20,7 @@
     event.preventDefault();
     form = new FormData(event.target)
 
+    
     fetch("http://127.0.0.1:3007/v1/transactions/status-from-doc", {
         method: "POST",  
         headers:{
@@ -33,7 +34,7 @@
       let url = window.URL.createObjectURL(blob); // create a URL for the Blob
       let link = document.createElement('a'); // create a link element
       link.href = url; // set the href of the link to the Blob URL
-      link.download = 'filename.xlsx'; // set the filename and extension
+      link.download = 'txn_status.xlsx'; // set the filename and extension
       link.click();
     })
 
