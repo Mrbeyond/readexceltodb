@@ -46,7 +46,6 @@ func (processPool *ProcessPool) generateExcelChunkSV(f *excelize.File, sheetName
 
 	totalRows := len(rows)
 	totalChunks := (totalRows + chunkVolume - 1) / chunkVolume
-	fmt.Println(totalChunks)
 
 	wg := sync.WaitGroup{}
 	wg.Add(totalChunks)
@@ -68,7 +67,6 @@ func (processPool *ProcessPool) generateExcelChunkSV(f *excelize.File, sheetName
 	}
 
 	wg.Wait()
-	fmt.Println("Here and here ")
 	close(processPool.dataChan)
 }
 
@@ -98,7 +96,6 @@ func (processPool *ProcessPool) generateExcelChunkLV(rows *excelize.Rows) {
 			for rows.Next() {
 				cols, err := rows.Columns()
 				if err != nil {
-					fmt.Println(err.Error(), "is error")
 					processPool.errorMessage = err.Error()
 					close(processPool.dataChan) // close data channel
 					mtx.Unlock()
@@ -136,14 +133,10 @@ func (processPool *ProcessPool) processExcelChunk() {
 			defer processPool.wg.Done()
 			for rows := range processPool.dataChan {
 				// Process each chunk here, such as inserting into database
-				// processPool.mutex.Lock()
-				fmt.Println(rows)
-				// processPool.mutex.Unlock()
 
 				// Check if all the Excel lines have been saved
 				processPool.mutex.Lock()
 				processPool.totalChunkFetched += len(rows)
-				fmt.Println(processPool.totalChunkFetched)
 				if processPool.excelLinesRead == processPool.totalChunkFetched {
 					processPool.done = true
 					processPool.mutex.Unlock()
@@ -198,11 +191,11 @@ func ReadExcel(ctx *gin.Context) {
 		return
 	}
 
-	// Read and get header
+	// Read and get header:
+	// Read first row (header row) to allow reader of data from real data role in the generateExcelChunkLV
 	iteRows.Next()
-	header, err := iteRows.Columns()
+	_, err = iteRows.Columns()
 	// Use header for more dynmic purpose e.g particular column process
-	fmt.Sprintln(header)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -222,13 +215,12 @@ func ReadExcel(ctx *gin.Context) {
 	}
 
 	go processPool.processExcelChunk() // Use worker pool to process excel in chunks
-	if fileVolume > 10 {
-		processPool.generateExcelChunkLV(iteRows) // Read excel rows into chunks
-	} else {
+	if fileVolume < 1 {
 		processPool.generateExcelChunkSV(xclF, sheetName) // Read excel rows into chunksv
+	} else {
+		processPool.generateExcelChunkLV(iteRows) // Read excel rows into chunks
 	}
 
-	fmt.Println("Here")
 	// Lock flow until all workers are done
 	wg.Wait()
 
@@ -249,7 +241,6 @@ func PopulateExcel(ctx *gin.Context) {
 	dummy.SetCellValue(shtName, "A1", "REQ_ID")
 
 	for i, req_id := range ids {
-		fmt.Println(i + 2)
 		dummy.SetCellValue(shtName, fmt.Sprintf("A%d", i+2), req_id)
 	}
 
